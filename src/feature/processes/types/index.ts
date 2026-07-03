@@ -1,34 +1,51 @@
-export interface ProcessBase {
+export type ProcessOrigin = "TCE-PB" | "TJPB";
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface ProcessSummary {
   id: string;
   numero: string;
-  tribunal: "TCE" | "TJPB";
-  status: string;
-  dataCadastro: string;
-  valor?: number;
+  dataPublicacao: string;
+  origem: ProcessOrigin;
 }
 
-export interface TceProcess extends ProcessBase {
-  relator: string;
-  jurisdicionado: string;
-  tipo: string;
+export interface ProcessParticipant {
+  id: string;
+  nome: string;
+  oab: string | null;
+  documento: string | null;
 }
 
-export interface TjpbProcess extends ProcessBase {
-  orgaoJulgador: string;
-  classe: string;
-  partes: {
-    autor: string;
-    reu: string;
-  };
-  juiz: string;
+export interface ProcessParty {
+  processoId: string;
+  participanteId: string;
+  isPoloAtivo: boolean | null;
+  isPoloPassivo: boolean | null;
+  qualificacao: string;
+  participante: ProcessParticipant;
 }
 
-export type ProcessDetail = TceProcess | TjpbProcess;
+export interface ProcessDetail extends ProcessSummary {
+  polosProcessos: ProcessParty[];
+}
+
+export interface MovementAttachment {
+  id: string;
+  processoId: string;
+  movimentoId: string;
+  linkAnexo: string;
+}
 
 export interface Movement {
   id: string;
-  data: string;
-  descricao: string;
-  responsavel: string;
-  detalhes?: string;
+  processoId: string;
+  dataMovimentacao: string;
+  titulo: string;
+  temAnexo: boolean;
+  anexos: MovementAttachment[];
 }
