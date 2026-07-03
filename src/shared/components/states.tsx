@@ -1,7 +1,6 @@
 import React from "react";
 import { Icons } from "./icons";
 
-// --- Loading / Skeleton States ---
 export const SkeletonLine = ({ className = "" }: { className?: string }) => {
   return (
     <div
@@ -20,7 +19,10 @@ export const TableSkeleton = ({ rows = 5 }: { rows?: number }) => {
         <SkeletonLine className="w-1/4 h-5" />
       </div>
       {Array.from({ length: rows }).map((_, idx) => (
-        <div key={idx} className="flex space-x-4 py-2 border-b border-zinc-100 dark:border-zinc-800/40">
+        <div
+          key={idx}
+          className="flex space-x-4 py-2 border-b border-zinc-100 dark:border-zinc-800/40"
+        >
           <SkeletonLine className="w-1/4" />
           <SkeletonLine className="w-1/3" />
           <SkeletonLine className="w-1/6" />
@@ -57,7 +59,6 @@ export const DetailSkeleton = () => {
   );
 };
 
-// --- Empty State ---
 interface EmptyStateProps {
   title?: string;
   description?: string;
@@ -84,7 +85,6 @@ export const EmptyState = ({
   );
 };
 
-// --- Error State ---
 interface ErrorStateProps {
   title?: string;
   message?: string;
