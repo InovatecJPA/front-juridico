@@ -35,7 +35,6 @@ export default function ProcessesLayout({
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans">
-      {/* Header Institucional */}
       <header className="sticky top-0 z-40 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -58,9 +57,7 @@ export default function ProcessesLayout({
         </div>
       </header>
 
-      {/* Main Content Area */}
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row gap-8 flex-1">
-        {/* Lateral Navigation Sidebar */}
         <aside className="w-full md:w-64 shrink-0">
           <nav className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0 scrollbar-none border-b border-zinc-200 dark:border-zinc-800 md:border-b-0">
             {navigation.map((item) => {
@@ -83,11 +80,9 @@ export default function ProcessesLayout({
           </nav>
         </aside>
 
-        {/* Content Panel */}
         <main className="flex-1 min-w-0">{children}</main>
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-zinc-200 dark:border-zinc-800 py-6 bg-white dark:bg-zinc-900/40 text-center text-xs text-zinc-400 dark:text-zinc-500">
         <div className="max-w-7xl mx-auto px-4">
           <p>© {new Date().getFullYear()} JurídicoPortal - Consulta de Processos Jurídicos e Administrativos.</p>

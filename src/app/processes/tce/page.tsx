@@ -1,35 +1,57 @@
-"use client";
-
-import React from "react";
-import { useTceProcesses } from "@/feature/processes/hooks";
 import ProcessListTable from "@/feature/processes/components/ProcessListTable";
-import { TableSkeleton, ErrorState } from "@/shared/components/states";
+import {
+  getApiErrorMessage,
+  getTceProcesses,
+} from "@/feature/processes/api/server";
+import { ErrorState } from "@/shared/components/states";
 
-export default function TceProcessesPage() {
-  const { data, loading, error, retry } = useTceProcesses();
+const PAGE_SIZE = 10;
+
+function getPageParam(value: string | string[] | undefined) {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  const parsed = Number.parseInt(rawValue ?? "1", 10);
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+export default async function TceProcessesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const page = getPageParam(params.page);
+  let response;
+
+  try {
+    response = await getTceProcesses(page, PAGE_SIZE);
+  } catch (error) {
+    return (
+      <ErrorState
+        message={getApiErrorMessage(error)}
+        title="Erro ao carregar processos do TCE-PB"
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho de Título */}
       <div>
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
           Tribunal de Contas da Paraíba (TCE-PB)
         </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1.5">
-          Lista e consulta de prestações de contas, licitações, denúncias e acompanhamentos de gestão.
+        <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+          Listagem paginada conectada à API real para consulta dos processos do
+          TCE-PB.
         </p>
       </div>
 
-      {/* Estados Visuais */}
-      {loading ? (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-xs">
-          <TableSkeleton rows={5} />
-        </div>
-      ) : error ? (
-        <ErrorState onRetry={retry} message={error} />
-      ) : (
-        <ProcessListTable tribunal="TCE" processes={data} />
-      )}
+      <ProcessListTable
+        tribunal="TCE-PB"
+        processes={response.data}
+        pagination={response}
+        basePath="/processes/tce"
+      />
     </div>
   );
 }
