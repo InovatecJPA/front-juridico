@@ -38,6 +38,19 @@ function buildApiUrl(
   return url;
 }
 
+export function buildExternalAttachmentUrl(path: string) {
+  const apiBaseUrl = new URL(getApiBaseUrl());
+
+  try {
+    const attachmentUrl = new URL(path);
+    const normalizedPath = `${attachmentUrl.pathname}${attachmentUrl.search}`;
+
+    return new URL(normalizedPath, apiBaseUrl);
+  } catch {
+    return buildApiUrl(path);
+  }
+}
+
 export class ApiClientError extends Error {
   constructor(
     message: string,
