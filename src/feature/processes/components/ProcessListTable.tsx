@@ -56,7 +56,7 @@ export default function ProcessListTable({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="relative flex items-center max-w-md">
+        <div className="relative flex w-full items-center max-w-md">
           <div className="absolute left-3.5 text-zinc-400 pointer-events-none">
             <Icons.Search size={18} />
           </div>

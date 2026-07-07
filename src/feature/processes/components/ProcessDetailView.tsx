@@ -86,7 +86,7 @@ export default function ProcessDetailView({ process }: ProcessDetailViewProps) {
 
       <CardContent className="space-y-6 p-6">
         <section>
-          <h3 className="text-sm font-semibold text-zinc-400 dark:text-zinc-500 tracking-wider uppercase mb-4">
+          <h3 className="mt-4 text-sm font-semibold text-zinc-400 dark:text-zinc-500 tracking-wider uppercase mb-4">
             Resumo do processo
           </h3>
 
