@@ -49,6 +49,49 @@ export class ApiClientError extends Error {
   }
 }
 
+const API_UNAVAILABLE_MESSAGE =
+  "Nao conseguimos carregar os dados agora. Tente novamente em instantes.";
+
+function isConnectivityErrorMessage(message: string) {
+  const normalizedMessage = message.toLowerCase();
+
+  return (
+    normalizedMessage.includes("fetch failed") ||
+    normalizedMessage.includes("failed to fetch") ||
+    normalizedMessage.includes("networkerror") ||
+    normalizedMessage.includes("network error") ||
+    normalizedMessage.includes("econnrefused") ||
+    normalizedMessage.includes("enotfound") ||
+    normalizedMessage.includes("etimedout") ||
+    normalizedMessage.includes("socket hang up")
+  );
+}
+
+function isHtmlResponseText(value: string) {
+  const normalizedValue = value.trim().toLowerCase();
+
+  return (
+    normalizedValue.startsWith("<!doctype html") ||
+    normalizedValue.startsWith("<html") ||
+    normalizedValue.includes("<body")
+  );
+}
+
+function isUnavailableErrorDetails(details?: string) {
+  if (!details) {
+    return false;
+  }
+
+  const normalizedDetails = details.toLowerCase();
+
+  return (
+    isHtmlResponseText(details) ||
+    normalizedDetails.includes("err_ngrok_3200") ||
+    normalizedDetails.includes("endpoint") && normalizedDetails.includes("offline") ||
+    normalizedDetails.includes("ngrok")
+  );
+}
+
 async function parseErrorDetails(response: Response) {
   const contentType = response.headers.get("content-type") ?? "";
 
@@ -127,12 +170,20 @@ export function getProcessMovements(id: string, page = 1, limit = 10) {
 
 export function getApiErrorMessage(error: unknown) {
   if (error instanceof ApiClientError) {
+    if (error.status >= 500 || isUnavailableErrorDetails(error.details)) {
+      return API_UNAVAILABLE_MESSAGE;
+    }
+
     return error.details ?? error.message;
   }
 
   if (error instanceof Error) {
+    if (isConnectivityErrorMessage(error.message)) {
+      return API_UNAVAILABLE_MESSAGE;
+    }
+
     return error.message;
   }
 
-  return "Ocorreu um erro inesperado ao carregar os dados.";
+  return API_UNAVAILABLE_MESSAGE;
 }

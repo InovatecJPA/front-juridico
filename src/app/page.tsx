@@ -19,17 +19,16 @@ export default async function DashboardPage() {
     getTceProcesses(1, 10),
     getTjpbProcesses(1, 10),
   ]);
-
-  if (tceResult.status === "rejected" && tjpbResult.status === "rejected") {
-    return (
-      <ErrorState
-        title="Erro ao carregar o painel"
-        message={`${getApiErrorMessage(tceResult.reason)} ${getApiErrorMessage(
-          tjpbResult.reason
-        )}`}
-      />
-    );
-  }
+  const hasDashboardError =
+    tceResult.status === "rejected" && tjpbResult.status === "rejected";
+  const errorMessages = hasDashboardError
+    ? Array.from(
+        new Set([
+          getApiErrorMessage(tceResult.reason),
+          getApiErrorMessage(tjpbResult.reason),
+        ])
+      )
+    : [];
 
   const tceTotal = tceResult.status === "fulfilled" ? tceResult.value.total : 0;
   const tjpbTotal =
@@ -108,6 +107,13 @@ export default async function DashboardPage() {
         </aside>
 
         <main className="flex-1 min-w-0 space-y-8">
+          {hasDashboardError ? (
+            <ErrorState
+              title="Erro ao carregar o painel"
+              message={errorMessages.join(" ")}
+            />
+          ) : (
+            <>
           <div className="bg-indigo-600 text-white rounded-2xl p-6 md:p-8 shadow-xs relative overflow-hidden">
             <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none transform translate-y-1/4 translate-x-1/10">
               <Icons.ScaleBalance size={300} />
@@ -254,6 +260,8 @@ export default async function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+            </>
+          )}
         </main>
       </div>
 
