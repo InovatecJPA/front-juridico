@@ -5,7 +5,7 @@ import {
   ProcessSummary,
 } from "../types";
 
-const DEFAULT_REVALIDATE_SECONDS = 60;
+const DEFAULT_REVALIDATE_SECONDS = 15;
 
 function getApiBaseUrl() {
   const rawBaseUrl =
@@ -119,18 +119,24 @@ async function parseErrorDetails(response: Response) {
 async function fetchFromApi<T>(
   path: string,
   options?: {
+    cache?: RequestCache;
     revalidate?: number;
     searchParams?: Record<string, string | number | undefined>;
   }
 ) {
   const response = await fetch(buildApiUrl(path, options?.searchParams), {
+    cache: options?.cache,
     headers: {
       "Content-Type": "application/json",
       "ngrok-skip-browser-warning": "true",
     },
-    next: {
-      revalidate: options?.revalidate ?? DEFAULT_REVALIDATE_SECONDS,
-    },
+    ...(options?.cache === "no-store"
+      ? {}
+      : {
+          next: {
+            revalidate: options?.revalidate ?? DEFAULT_REVALIDATE_SECONDS,
+          },
+        }),
   });
 
   if (!response.ok) {
@@ -156,6 +162,7 @@ export function getProcesses(
   limit = 10
 ) {
   return fetchFromApi<PaginatedResponse<ProcessSummary>>(`processes/${origin}`, {
+    cache: "no-store",
     searchParams: { page, limit },
   });
 }
@@ -169,13 +176,16 @@ export function getTjpbProcesses(page = 1, limit = 10) {
 }
 
 export function getProcessDetail(id: string) {
-  return fetchFromApi<ProcessDetail>(`processes/${id}`);
+  return fetchFromApi<ProcessDetail>(`processes/${id}`, {
+    cache: "no-store",
+  });
 }
 
 export function getProcessMovements(id: string, page = 1, limit = 10) {
   return fetchFromApi<PaginatedResponse<Movement>>(
     `processes/${id}/movements`,
     {
+      cache: "no-store",
       searchParams: { page, limit },
     }
   );
