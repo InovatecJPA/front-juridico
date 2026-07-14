@@ -5,7 +5,7 @@ import {
   ProcessSummary,
 } from "../types";
 
-const DEFAULT_REVALIDATE_SECONDS = 60;
+const DEFAULT_REVALIDATE_SECONDS = 15;
 
 function getApiBaseUrl() {
   const rawBaseUrl =
@@ -38,6 +38,19 @@ function buildApiUrl(
   return url;
 }
 
+export function buildExternalAttachmentUrl(path: string) {
+  const apiBaseUrl = new URL(getApiBaseUrl());
+
+  try {
+    const attachmentUrl = new URL(path);
+    const normalizedPath = `${attachmentUrl.pathname}${attachmentUrl.search}`;
+
+    return new URL(normalizedPath, apiBaseUrl);
+  } catch {
+    return buildApiUrl(path);
+  }
+}
+
 export class ApiClientError extends Error {
   constructor(
     message: string,
@@ -47,6 +60,49 @@ export class ApiClientError extends Error {
     super(message);
     this.name = "ApiClientError";
   }
+}
+
+const API_UNAVAILABLE_MESSAGE =
+  "Nao conseguimos carregar os dados agora. Tente novamente em instantes.";
+
+function isConnectivityErrorMessage(message: string) {
+  const normalizedMessage = message.toLowerCase();
+
+  return (
+    normalizedMessage.includes("fetch failed") ||
+    normalizedMessage.includes("failed to fetch") ||
+    normalizedMessage.includes("networkerror") ||
+    normalizedMessage.includes("network error") ||
+    normalizedMessage.includes("econnrefused") ||
+    normalizedMessage.includes("enotfound") ||
+    normalizedMessage.includes("etimedout") ||
+    normalizedMessage.includes("socket hang up")
+  );
+}
+
+function isHtmlResponseText(value: string) {
+  const normalizedValue = value.trim().toLowerCase();
+
+  return (
+    normalizedValue.startsWith("<!doctype html") ||
+    normalizedValue.startsWith("<html") ||
+    normalizedValue.includes("<body")
+  );
+}
+
+function isUnavailableErrorDetails(details?: string) {
+  if (!details) {
+    return false;
+  }
+
+  const normalizedDetails = details.toLowerCase();
+
+  return (
+    isHtmlResponseText(details) ||
+    normalizedDetails.includes("err_ngrok_3200") ||
+    normalizedDetails.includes("endpoint") && normalizedDetails.includes("offline") ||
+    normalizedDetails.includes("ngrok")
+  );
 }
 
 async function parseErrorDetails(response: Response) {
@@ -63,18 +119,24 @@ async function parseErrorDetails(response: Response) {
 async function fetchFromApi<T>(
   path: string,
   options?: {
+    cache?: RequestCache;
     revalidate?: number;
     searchParams?: Record<string, string | number | undefined>;
   }
 ) {
   const response = await fetch(buildApiUrl(path, options?.searchParams), {
+    cache: options?.cache,
     headers: {
       "Content-Type": "application/json",
       "ngrok-skip-browser-warning": "true",
     },
-    next: {
-      revalidate: options?.revalidate ?? DEFAULT_REVALIDATE_SECONDS,
-    },
+    ...(options?.cache === "no-store"
+      ? {}
+      : {
+          next: {
+            revalidate: options?.revalidate ?? DEFAULT_REVALIDATE_SECONDS,
+          },
+        }),
   });
 
   if (!response.ok) {
@@ -100,6 +162,7 @@ export function getProcesses(
   limit = 10
 ) {
   return fetchFromApi<PaginatedResponse<ProcessSummary>>(`processes/${origin}`, {
+    cache: "no-store",
     searchParams: { page, limit },
   });
 }
@@ -113,13 +176,16 @@ export function getTjpbProcesses(page = 1, limit = 10) {
 }
 
 export function getProcessDetail(id: string) {
-  return fetchFromApi<ProcessDetail>(`processes/${id}`);
+  return fetchFromApi<ProcessDetail>(`processes/${id}`, {
+    cache: "no-store",
+  });
 }
 
 export function getProcessMovements(id: string, page = 1, limit = 10) {
   return fetchFromApi<PaginatedResponse<Movement>>(
     `processes/${id}/movements`,
     {
+      cache: "no-store",
       searchParams: { page, limit },
     }
   );
@@ -127,12 +193,20 @@ export function getProcessMovements(id: string, page = 1, limit = 10) {
 
 export function getApiErrorMessage(error: unknown) {
   if (error instanceof ApiClientError) {
+    if (error.status >= 500 || isUnavailableErrorDetails(error.details)) {
+      return API_UNAVAILABLE_MESSAGE;
+    }
+
     return error.details ?? error.message;
   }
 
   if (error instanceof Error) {
+    if (isConnectivityErrorMessage(error.message)) {
+      return API_UNAVAILABLE_MESSAGE;
+    }
+
     return error.message;
   }
 
-  return "Ocorreu um erro inesperado ao carregar os dados.";
+  return API_UNAVAILABLE_MESSAGE;
 }

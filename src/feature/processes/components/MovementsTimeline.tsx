@@ -1,5 +1,4 @@
 import React from "react";
-import { getPublicApiBaseUrl } from "../api/server";
 import { Movement } from "../types";
 import { Icons } from "@/shared/components/icons";
 import { EmptyState } from "@/shared/components/states";
@@ -9,7 +8,10 @@ interface MovementsTimelineProps {
 }
 
 function buildAttachmentUrl(path: string) {
-  return new URL(path, getPublicApiBaseUrl()).toString();
+  const url = new URL("/api/processes/attachments", "http://localhost");
+  url.searchParams.set("path", path);
+
+  return `${url.pathname}${url.search}`;
 }
 
 export default function MovementsTimeline({
